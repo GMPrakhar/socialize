@@ -1,0 +1,197 @@
+<html>
+<head>
+	<title>Home - Socialize</title>
+	<!-- Latest compiled and minified CSS -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css">
+
+<!-- jQuery library -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+
+<!-- Popper JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js"></script>
+
+<!-- Latest compiled JavaScript -->
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.9/angular.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.9/angular-route.js"></script>
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.4.1/css/all.css" integrity="sha384-5sAR7xN1Nv6T6+dT2mhtzEpVJvfS3NScPQTrOxhwjIuvcA67KV2R5Jz6kr4abQsz" crossorigin="anonymous">
+
+<link href='https://fonts.googleapis.com/css?family=ABeeZee' rel='stylesheet'>
+<style>
+body
+{
+	background: #546E7A;
+}
+.user-post
+{
+	height: 200px;
+	width: 100%;
+	padding: 15px;
+	border: 1px outset rgba(100,100,100,0.8);
+	font-family: 'ABeeZee';
+}
+
+
+.post-btn
+{
+	
+}
+
+.fa
+{
+	margin-right: 10px !important;
+}
+
+.post-content
+{
+	white-space: pre-wrap;
+}
+
+.post
+{
+	padding: 20px;
+	box-shadow: 1.5px 1.5px 8px -2px;
+	margin-bottom: 20px;
+}
+</style>
+</head>
+<body ng-app="social" ng-controller="control" >
+	
+	<header >
+		
+		<nav class="navbar navbar-expand-md bg-dark navbar-dark ">
+			<a class="navbar-brand" href="#">Socialize</a>
+			<ul class="navbar-nav ml-auto" style="margin-right: 50px">
+				<li class="nav-item" style="margin-right: 15px">
+					<a class="nav-link" style="margin-top:4px" href="#"><i class="fa fa-bell"></i></a>
+				</li>
+				 <li class="nav-item dropdown" >
+					 <a class="nav-link dropdown" data-toggle="dropdown" href="#"><i class="fa fa-user"></i>&nbsp; <%= sess.name.split(' ')[0] %></a>
+					<div class="dropdown-menu" style="margin-top:6px">
+					<a class="dropdown-item" href="/profile">Profile</a>
+					<a class="dropdown-item" href="#">Settings</a>
+					<a class="dropdown-item" href="#">Logout</a>
+					</div>	
+				</li>
+			</ul>
+		</nav>
+	</header>
+		<div class="row" style="margin-top: 50px">
+			<div class="col-md-3"></div>
+			<div class="col-md-6" >
+				<div class="row">
+					<div class="col-md-12" >
+						<textarea class="user-post" placeholder="Write Something.."></textarea>
+					</div>
+				</div>
+				<div class="row" style="margin-top:20px">
+					<div class="col-md-10"></div>
+					<div class="col-md-2">
+						<button class="btn btn-danger" class="post-btn" style="width: 100%; height: 40px;" ng-click="post_the_post()">Post</button>
+					</div>
+				</div>
+				<div class="row" style="margin-top: 30px"></div>
+				
+				<div class="row card post" ng-repeat="post in posts">
+					<div class="col-md-12 post-body card-body">
+					<div class="row">
+						
+						<div class="col-md-4 post-name">
+						<i class="fa fa-user"></i>
+						{{post.name}}
+						</div>
+						<div class="col-md-8"></div>
+					</div>
+					<div class="row post-content" style="margin-top:15px">
+						<div class="col-md-12">{{post.content}}
+						</div>
+					</div>
+					<div class="row" style="margin-top:30px">
+					<div class="col-md-5"><i class="fa fa-thumbs-up" style="color:{{post.liked}};" ng-click="toggle_like(post)"></i>{{post.likes.length}} <font ng-if="post.likes.length==1">Like</font><font ng-if="post.likes.length!=1">Likes</font></div>
+					<div class="col-md-5"></div>
+					</div>
+					</div>
+				</div>
+				
+			</div>
+			<div class="col-md-3"></div>
+		</div>
+	
+</body>
+<script>
+var app = angular.module("social", []);
+
+app.controller("control", function($scope, $http) {
+	$scope.posts = [];
+	$http.post("/fetchPosts", {})
+		.then(function(response)
+		{
+			for(var i = 0; i < response.data.length; i++)
+			{
+				var post = response.data[i];
+				var liked = "";
+				console.log(post.likes);
+				for(var j = 0; j < post.likes.length; j++)
+				{
+					var like = post.likes[j];
+					console.log(like.email=="<%=sess.email%>");
+					if(like.email=="<%=sess.email%>") { liked="blue"; break;}
+				}
+					
+			post.liked = liked;
+			$scope.posts.unshift(post);
+			console.log(post);
+			}
+		}, function(response)
+		{
+			});
+    $scope.post_the_post = function()
+    {
+		$http.post("/addPost", {data: $('.user-post').val()})
+		.then(function(response)
+		{
+			console.log(response.data);
+			var liked = "";
+			response.data.liked = liked;
+			$scope.posts.unshift(response.data);
+		}, function(response)
+		{
+			});
+	}
+	
+	$scope.toggle_like = function(post)
+	{
+		if(post.liked=="")
+		{
+			post.liked="blue";
+			post.likes.push({email:"<%=sess.email%>", name:"<%=sess.name%>" });
+		}
+		else
+		{
+			post.liked="";
+			post.likes.splice(post.likes.indexOf("<%=sess.email%>"), 1);
+		}
+		$http.post("/likeUnlike", {id: post.id, liked: post.liked,email:"<%=sess.email%>", name:"<%=sess.name%>" })
+		.then(function(response)
+		{
+			console.log(response.data);
+			post.likes = response.data;
+		}, function(response)
+		{
+			});
+	}
+});
+$(document).ready(function()
+{
+	  // Add slideDown animation to Bootstrap dropdown when expanding.
+  $('.dropdown').on('show.bs.dropdown', function() {
+    $(this).find('.dropdown-menu').first().stop(true, true).slideDown();
+  });
+
+  // Add slideUp animation to Bootstrap dropdown when collapsing.
+  $('.dropdown').on('hide.bs.dropdown', function() {
+    $(this).find('.dropdown-menu').first().stop(true, true).slideUp();
+  });
+});
+</script>
+</html>

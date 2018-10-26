@@ -1,0 +1,30 @@
+name: DevSpace-1467
+containers:
+  - name: mongodb
+    image: 'mongo:3.6.2'
+    runtimeOptions:
+      cmd: 'mongod '
+      workDir: ''
+      entryPoint: 'docker-entrypoint.sh '
+    persistentFolders:
+      - name: data
+        localSubPath: null
+        containerPath: /data/db
+  - name: nodejs
+    image: 'node:9.4'
+    runtimeOptions:
+      cmd: run watch
+      workDir: /app
+      entryPoint: npm
+    initScript: |
+      #!/bin/bash
+      npm install
+    env:
+      NODE_ENV: dev
+    persistentFolders:
+      - name: source-code
+        localSubPath: ./
+        containerPath: /app
+    routes:
+      - hostPrefix: ''
+        containerPort: 3000
