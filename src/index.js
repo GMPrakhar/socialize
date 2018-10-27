@@ -2,6 +2,7 @@ const express = require('express');
 var ejs = require('ejs');
 var session = require('express-session');
 const app = express();
+app.use(express.static(__dirname + '/images'));
 app.use(session({secret:'Prak123'}));
 const fs = require('fs');
 var port    = parseInt(process.env.PORT, 10) || 3000;
@@ -86,7 +87,7 @@ app.post('/signup', function(req,res) {
 	var name = req.body.name;
 	var email = req.body.email;
 	var pass = req.body.pass;
-	var user = {name: name, email: email, pass: pass, friends: [], posts: []};
+	var user = {name: name, email: email, pass: pass, friends: [], posts: [], profile_img: "images/all.png"};
 	addUser(db, user,req, res);
 });
 
@@ -115,6 +116,23 @@ app.post('/fetchPosts', function(req,res)
 {
 	var friends = req.session.user.friends;
 		db.collection('Posts').find({user: {$all:friends}}).toArray(function(err,result)
+		{
+		if(err) throw err;
+		//console.log(result);
+		if(!err)
+		{
+			res.writeHead(200, {'Content-Type': 'text/html'});
+			res.write(JSON.stringify(result));
+			res.end();
+		}
+		});
+	
+});
+
+app.post('/fetchPostsProfile', function(req,res)
+{
+	var email = req.body.prof;
+		db.collection('Posts').find({user: email}).toArray(function(err,result)
 		{
 		if(err) throw err;
 		//console.log(result);
@@ -212,14 +230,27 @@ else
 	res.end();
 }
 });
-app.get('/profile', function(req,res)
+app.get('/profile/:userID', function(req,res)
 {
 	if(req.session.user){
   fs.readFile('pages/profile.ejs','utf-8', function(err, data) {
     res.writeHead(200, {'Content-Type': 'text/html'});
     //res.write(data);
-    var renderedHtml = ejs.render(data, {sess: req.session.user});
-    res.end(renderedHtml);
+    db.collection('Users').find({email:req.params.userID}).toArray(function(err,result)
+	{
+		if(err){
+			
+			}
+		//console.log(result);
+		if(!err)
+		{
+			if(result.length==0) res.end("Sorry no profile found for given data");
+			else{
+			var renderedHtml = ejs.render(data, {sess: req.session.user, profile: result[0]});
+			res.end(renderedHtml);
+		}
+		}
+	});
   });
 } 
 else 

@@ -1,0 +1,21 @@
+
+	<header >
+		
+		<nav class="navbar navbar-expand-md bg-dark navbar-dark ">
+			<a class="navbar-brand" href="#">Socialize</a>
+			<ul class="navbar-nav ml-auto" style="margin-right: 50px">
+				<li class="nav-item" style="margin-right: 15px">
+					<a class="nav-link" style="margin-top:4px" href="#"><i class="fa fa-bell"></i></a>
+				</li>
+				 <li class="nav-item dropdown" >
+					 <a class="nav-link dropdown" data-toggle="dropdown" href="#"><i class="fa fa-user"></i>&nbsp; <%= sess.name.split(' ')[0] %></a>
+					<div class="dropdown-menu" style="margin-top:6px">
+					<a class="dropdown-item" href="/profile">Profile</a>
+					<a class="dropdown-item" href="#">Settings</a>
+					<a class="dropdown-item" href="#">Logout</a>
+					</div>	
+				</li>
+			</ul>
+		</nav>
+	</header>
+	
