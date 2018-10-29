@@ -1,6 +1,6 @@
 <html>
 <head>
-	<title><%= sess.name.split(' ')[0] %>'s Profile- Socialize </title>
+	<title><%= profile.name.split(' ')[0] %>'s Profile- Socialize </title>
 
 	<!-- Latest compiled and minified CSS -->
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css">
@@ -38,6 +38,9 @@
 	font-family: "Adamina";
 	color: #FFF;
 	font-weight: 599;
+	<% if (profile.name.split(' ').length ==1 ) { %>
+		text-align: center;
+	<%}%>
 }
 .bar
 {
@@ -85,6 +88,7 @@ body
 .fa
 {
 	margin-right: 10px !important;
+	cursor: pointer;
 }
 
 .post-content
@@ -99,6 +103,17 @@ body
 	margin-bottom: 20px;
 	font-size: 18px;
 }
+
+.friendship
+{
+	display: inline-block;
+}
+.friend-slide
+{
+	display: none;
+	border: 1px solid #333;
+}
+
 </style>
 
 </head>
@@ -112,7 +127,7 @@ body
 					<a class="nav-link" style="margin-top:4px" href="#"><i class="fa fa-bell"></i></a>
 				</li>
 				 <li class="nav-item dropdown" >
-					 <a class="nav-link dropdown" data-toggle="dropdown" href="#"><i class="fa fa-user"></i>&nbsp; <%= profile.name.split(' ')[0] %></a>
+					 <a class="nav-link dropdown" data-toggle="dropdown" href="#"><i class="fa fa-user"></i>&nbsp; <%= sess.name.split(' ')[0] %></a>
 					<div class="dropdown-menu" style="margin-top:6px">
 					<a class="dropdown-item" href="/profile">Profile</a>
 					<a class="dropdown-item" href="#">Settings</a>
@@ -132,7 +147,15 @@ body
 				<div class="profile-img">
 					<img src="../<%=profile.profile_img%>"/>
 				</div><br>
-				<div class="prof-name"><%=profile.name%></div>
+				<div class="prof-name"><%=profile.name%>
+				<div class="friendship"  ng-if="'<%=profile.email%>'!='<%=sess.email%>'">
+					<i class="fa fa-user-plus" title="Send Friend request" ng-if="user.friends.indexOf('<%=profile.email%>')==-1 && user.friendreqsent.indexOf('<%=profile.email%>')==-1 && user.friendreqrec.indexOf('<%=profile.email%>')==-1" ng-click="sendFriend()"></i>
+					<i class="fa fa-user-times" title="Cancel Friend request" ng-if="user.friendreqsent.indexOf('<%=profile.email%>')!=-1 && user.friendreqrec.indexOf('<%=profile.email%>')==-1 && user.friends.indexOf('<%=profile.email%>')==-1" ng-click="cancelFriend()"></i>
+					<i class="fa fa-check-circle" title="You are Friends with <%=profile.name.split(' ')[0]%>" ng-if="user.friends.indexOf('<%=profile.email%>')!=-1"></i>
+					<i class="fa fa-plus-circle" title="Accept Friend request!" ng-if="user.friendreqrec.indexOf('<%=profile.email%>')!=-1" ng-click="acceptFriend()"></i>
+					
+				</div>
+				</div>
 			</div>
 			<div class="col-md-4"></div>
 		</div><br>
@@ -177,6 +200,12 @@ body
 app.controller("control", function($scope, $http) {
 	$scope.posts = [];
 	$scope.totlikes = 0;
+
+	$scope.user = null;
+	$http.post("/getUser", {}).then(function(response)
+	{
+		$scope.user = response.data;
+	});
 	$http.post("/fetchPostsProfile", {prof: profEmail})
 		.then(function(response)
 		{
@@ -184,18 +213,18 @@ app.controller("control", function($scope, $http) {
 			{
 				var post = response.data[i];
 				var liked = "";
-				console.log(post.likes);
+				//console.log(post.likes);
 				for(var j = 0; j < post.likes.length; j++)
 				{
 					var like = post.likes[j];
 					$scope.totlikes++;
-					console.log(like.email=="<%=sess.email%>");
+					//console.log(like.email=="<%=sess.email%>");
 					if(like.email=="<%=sess.email%>") { liked="blue"; break;}
 				}
 					
 			post.liked = liked;
 			$scope.posts.unshift(post);
-			console.log(post);
+			//console.log(post);
 			}
 		}, function(response)
 		{
@@ -205,7 +234,7 @@ app.controller("control", function($scope, $http) {
 		$http.post("/addPost", {data: $('.user-post').val()})
 		.then(function(response)
 		{
-			console.log(response.data);
+			//console.log(response.data);
 			var liked = "";
 			response.data.liked = liked;
 			$scope.posts.unshift(response.data);
@@ -231,13 +260,49 @@ app.controller("control", function($scope, $http) {
 		$http.post("/likeUnlike", {id: post.id, liked: post.liked,email:"<%=sess.email%>", name:"<%=sess.name%>" })
 		.then(function(response)
 		{
-			console.log(response.data);
+			//console.log(response.data);
 			post.likes = response.data;
+			
 		}, function(response)
 		{
 			
 		});
 	}
+	
+	$scope.sendFriend = function()
+	{
+		$http.post("/sendFriend", {email: '<%=profile.email%>'})
+		.then(function(response)
+		{
+			$scope.user.friendreqsent.push('<%=profile.email%>');
+		},function(response)
+		{
+		});
+	};
+	
+	$scope.cancelFriend = function()
+	{
+		$http.post("/cancelFriend", {email: '<%=profile.email%>'})
+		.then(function(response)
+		{
+			$scope.user.friendreqsent.splice($scope.user.friendreqsent.indexOf('<%=profile.email%>'), 1);
+		},function(response)
+		{
+		});
+	};
+	
+	$scope.acceptFriend = function()
+	{
+		$http.post("/acceptFriend", {email: '<%=profile.email%>'})
+		.then(function(response)
+		{
+			$scope.user.friends.push('<%=profile.email%>');
+			$scope.user.friendreqrec.splice($scope.user.friendreqrec.indexOf('<%=profile.email%>'), 1);
+			$scope.user.friendreqsent.splice($scope.user.friendreqsent.indexOf('<%=profile.email%>'), 1);
+		},function(response)
+		{
+		});
+	};
 });
 
 $(document).ready(function()

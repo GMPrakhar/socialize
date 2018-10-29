@@ -87,7 +87,7 @@ app.post('/signup', function(req,res) {
 	var name = req.body.name;
 	var email = req.body.email;
 	var pass = req.body.pass;
-	var user = {name: name, email: email, pass: pass, friends: [], posts: [], profile_img: "images/all.png"};
+	var user = {name: name, email: email, pass: pass, friends: [], posts: [], profile_img: "images/all.png", friendreqsent: [],friendreqrec: []};
 	addUser(db, user,req, res);
 });
 
@@ -115,7 +115,7 @@ app.post('/login', function(req,res)
 app.post('/fetchPosts', function(req,res)
 {
 	var friends = req.session.user.friends;
-		db.collection('Posts').find({user: {$all:friends}}).toArray(function(err,result)
+		db.collection('Posts').find({user: {$in:friends}}).toArray(function(err,result)
 		{
 		if(err) throw err;
 		//console.log(result);
@@ -277,6 +277,120 @@ app.post('/addPost', function(req,res)
 			var post = {id: count, name: name, user: user, content: data, likes: likes, date: date};
 			addPost(db,post,req,res);
 			
+		}
+	});
+});
+
+
+app.post('/sendFriend', function(req,res)
+{
+	var email = req.session.user.email;
+	var reqTo = req.body.email;
+	
+			db.collection('Users').updateOne({email:email}, {$addToSet:{friendreqsent:reqTo}},function(err,result)
+				{
+				if(err) throw err;
+				//console.log(result);
+				if(!err)
+				{	
+					db.collection('Users').updateOne({email:reqTo}, {$addToSet:{friendreqrec:email}},function(err,result)
+					{
+					if(err) throw err;
+				//console.log(result);
+					if(!err)
+					{	
+						res.writeHead(200, {'Content-Type': 'text/html'});			
+						res.end("done");
+						
+			
+					}
+			
+					});
+						
+			
+				}
+			
+				});
+	
+});
+
+app.post('/cancelFriend', function(req,res)
+{
+	var email = req.session.user.email;
+	var reqTo = req.body.email;
+	
+			db.collection('Users').updateOne({email:email}, {$pull:{friendreqsent:reqTo}},function(err,result)
+				{
+				if(err) throw err;
+				//console.log(result);
+				if(!err)
+				{	
+					db.collection('Users').updateOne({email:reqTo}, {$pull:{friendreqrec:email}},function(err,result)
+					{
+					if(err) throw err;
+				//console.log(result);
+					if(!err)
+					{	
+						res.writeHead(200, {'Content-Type': 'text/html'});			
+						res.end("done");
+						
+			
+					}
+			
+					});
+						
+			
+				}
+			
+				});
+	
+});
+
+app.post('/acceptFriend', function(req,res)
+{
+	var email = req.session.user.email;
+	var reqTo = req.body.email;
+	
+			db.collection('Users').updateOne({email:email}, {$addToSet:{friends:reqTo}, $pull:{friendreqsent:reqTo},$pull:{friendreqrec:reqTo}},function(err,result)
+				{
+				if(err) throw err;
+				//console.log(result);
+				if(!err)
+				{	
+					db.collection('Users').updateOne({email:reqTo}, {$addToSet:{friends:email}, $pull:{friendreqrec:email},$pull:{friendreqsent:email}},function(err,result)
+					{
+					if(err) throw err;
+				//console.log(result);
+					if(!err)
+					{	
+						res.writeHead(200, {'Content-Type': 'text/html'});			
+						res.end("done");
+						
+			
+					}
+			
+					});
+						
+			
+				}
+			
+				});
+	
+});
+
+app.post('/getUser', function(req,res)
+{
+	var email = req.session.user.email;
+	console.log(email);
+	//console.log(log);
+	db.collection('Users').find({email: email}).toArray(function(err,result)
+	{
+		if(err) throw err;
+		console.log(result);
+		if(!err)
+		{
+    res.writeHead(200, {'Content-Type': 'text/html'});
+    res.end(JSON.stringify(result[0]));
 		}
 	});
 });

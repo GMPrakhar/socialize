@@ -53,6 +53,10 @@ body
 	box-shadow: 1.5px 1.5px 8px -2px;
 	margin-bottom: 20px;
 }
+a:hover
+{
+	text-decoration: none;
+}
 </style>
 </head>
 <body ng-app="social" ng-controller="control" >
@@ -97,8 +101,8 @@ body
 					<div class="row">
 						
 						<div class="col-md-4 post-name">
-						<i class="fa fa-user"></i>
-						{{post.name}}
+						<a href="/profile/{{post.user}}"><i class="fa fa-user"></i>
+						{{post.name}}</a>
 						</div>
 						<div class="col-md-8"></div>
 					</div>
