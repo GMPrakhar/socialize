@@ -204,7 +204,7 @@ app.controller("control", function($scope, $http) {
 	$scope.user = null;
 	$http.post("/getUser", {}).then(function(response)
 	{
-		$scope.user = response.data;
+		$scope.user = response.data.user;
 	});
 	$http.post("/fetchPostsProfile", {prof: profEmail})
 		.then(function(response)

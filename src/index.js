@@ -1,11 +1,12 @@
 const express = require('express');
 var ejs = require('ejs');
+var io = require('socketio');
 var session = require('express-session');
 const app = express();
 app.use(express.static(__dirname + '/images'));
 app.use(session({secret:'Prak123'}));
 const fs = require('fs');
-var port    = parseInt(process.env.PORT, 10) || 3000;
+var port    = parseInt(process.env.PORT, 10) || 8000;
 var mongo = require('mongodb').MongoClient;
 const url = "mongodb://localhost:27017";
 const dbname = 'Social';
@@ -114,7 +115,7 @@ app.post('/login', function(req,res)
 
 app.post('/fetchPosts', function(req,res)
 {
-	var friends = req.session.user.friends;
+	var friends = req.body.friends;
 		db.collection('Posts').find({user: {$in:friends}}).toArray(function(err,result)
 		{
 		if(err) throw err;
@@ -389,8 +390,21 @@ app.post('/getUser', function(req,res)
 		console.log(result);
 		if(!err)
 		{
-    res.writeHead(200, {'Content-Type': 'text/html'});
-    res.end(JSON.stringify(result[0]));
+			db.collection('Users').find({email: {$in: result[0].friendreqrec}}).toArray(function(err,result1)
+			{
+				if(err) throw err;
+				console.log(result);
+				if(!err)
+				{
+					var us = {user: result[0], reqs: []}; 
+					for(var i = 0;i < result1.length; i++)
+					{
+						us.reqs.push({email: result1[i].email,name: result1[i].name});
+					}
+			res.writeHead(200, {'Content-Type': 'text/html'});
+			res.end(JSON.stringify(us));
+				}
+			});
 		}
 	});
 });

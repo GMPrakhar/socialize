@@ -81,17 +81,17 @@ input[type=text],input[type=email],input[type=password]
 }
 </style>
 <body>
-<div ng-app="socialize">
+<div ng-app="socialize" ng-controller="control">
 	<div style="margin-top: 10%;">
 	<font size="24px" class="logo">Socialize</font>
 	<div class="card">
 		<div class="register">
 		<div class="heading">Register</div><br>
-		<form action="/signup" method="POST">
-		<input type="text" placeholder="Name" name="name"/><br><br>
-		<input type="email" placeholder="Email" name="email"/><br><br>	
-		<input type="password" placeholder="Password" name="pass"/><br><br>	
-		<center><input type="submit" class="regbtn" value="Register"></center>
+		<form onsubmit="return false">
+		<input type="text" placeholder="Name" name="name" ng-model="formd.name"/><br><br>
+		<input type="email" placeholder="Email" name="email" ng-model="formd.email"/><br><br>	
+		<input type="password" placeholder="Password" name="pass" ng-model="formd.pass"/><br><br>	
+		<center><button class="regbtn" ng-click="signup()">Register</button></center>
 		</form>
 		</div>
 		<span class="v1"></span>
@@ -106,5 +106,30 @@ input[type=text],input[type=email],input[type=password]
 	</div>
 	</div>
 </div>
+<script>
+	
+var app = angular.module("socialize", []);
+
+app.controller("control", function($scope, $http) {
+	$scope.formd = {};
+	$scope.signup = function()
+	{
+		$http.post("/signup", {data: $('.user-post').val()})
+		.then(function(response)
+		{
+			//console.log(response.data);
+			var status = response.data.status;
+			var message = response.data.message;
+			if(status==1) location.href = '/home';
+			else
+			{
+				
+			}
+		}, function(response)
+		{
+			});
+	}
+});
+</script>
 </body>
 </html>
