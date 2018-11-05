@@ -1,8 +1,10 @@
 const express = require('express');
 var ejs = require('ejs');
-var io = require('socketio');
 var session = require('express-session');
 const app = express();
+
+var server = require('http').createServer(app); 
+var io = require('socket.io')(server);
 app.use(express.static(__dirname + '/images'));
 app.use(session({secret:'Prak123'}));
 const fs = require('fs');
@@ -15,24 +17,37 @@ var db;
 var bodyParser = require('body-parser');
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
+
+io.on('connection', function(socket)
+{
+	console.log("a client connected");
+});
+
+
 const addUser = function(db, user, req, res)
 {
 	res.writeHead(200, {'Content-Type': 'text/html'});
 	const coll = db.collection('Users');
 	coll.insertOne(user, function(err,result,callback)
 	{
+		var re = {status:1, message: ""};
 		if(!err)
 		{
 			console.log("User added Succesfully");
-			res.write('Success');
+			re.message="Success";
+			res.write(JSON.stringify(re));
 			sess = req.session;
 			sess.user = {name: user.name, email: user.email, friends: user.friends, posts: user.posts};
+			res.end();
 		}
 		else 
 		{
+			re.status=0;
+			re.message="Failed with " + err;
 			console.log("Error Occured:" + err);
 			//callback = 0;
-			res.write('Unsucess');
+			res.write(JSON.stringify(re));
+			res.end();
 		}
 		});
 };
@@ -73,11 +88,7 @@ app.get('/', async (req, res, next) => {
   });
 
 });
-
-app.listen(port, function () {
-  console.log('Example app listening on port 3000!');
-});
-
+server.listen(port);
 var calb = function(res)
 {
 	
@@ -85,9 +96,10 @@ var calb = function(res)
 
 app.post('/signup', function(req,res) {
 	//console.log(req.body);
-	var name = req.body.name;
-	var email = req.body.email;
-	var pass = req.body.pass;
+	var name = req.body.data.name;
+	var email = req.body.data.email;
+	var pass = req.body.data.pass;
+	console.log(req.body);
 	var user = {name: name, email: email, pass: pass, friends: [], posts: [], profile_img: "images/all.png", friendreqsent: [],friendreqrec: []};
 	addUser(db, user,req, res);
 });
@@ -406,5 +418,44 @@ app.post('/getUser', function(req,res)
 				}
 			});
 		}
+	});
+});
+
+app.get('/messages', function(req,res)
+{
+	
+	if(req.session.user){
+  fs.readFile('pages/messages.ejs','utf-8', function(err, data) {
+    res.writeHead(200, {'Content-Type': 'text/html'});
+    //res.write(data);
+    var renderedHtml = ejs.render(data, {sess: req.session.user});
+    res.end(renderedHtml);
+  });
+}
+});
+
+app.post('/getConversations', function(req,res)
+{
+	var user = req.body.email;
+	var conversations = [];
+	db.collection('Conversations').find({$or:[{user1:user},{user2:user}]}).toArray(function(err,result)
+	{
+		for(var i = 0; i < result.length; i++)
+		{
+			var conv = {};
+			if(result[i].user1 == user) 
+			{
+				conv.user = result[i].user2;
+				conv.name = result[i].name2;
+			}
+			else 
+			{
+				conv.user = result[i].user1;
+				conv.name = result[i].name1;
+			}
+			conversations.unshift(conv);
+		}
+		    res.writeHead(200, {'Content-Type': 'text/html'});
+		res.end(JSON.stringify(conversations));
 	});
 });

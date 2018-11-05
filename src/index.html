@@ -1,6 +1,12 @@
 <html>
 <head>
 	<title>Socialize</title>
+	
+<!-- jQuery library -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+
+<!-- Popper JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js"></script>
 <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.9/angular.min.js"></script>
 </head>
 <style>
@@ -101,6 +107,7 @@ input[type=text],input[type=email],input[type=password]
 		<input type="email" placeholder="Email" name="email"/><br><br>	
 		<input type="password" placeholder="Password" name="pass"/><br><br>
 		<center><input type="submit" class="logbtn" value="Login"></center>
+		{{formd}}
 		</form>
 		</div>
 	</div>
@@ -114,12 +121,13 @@ app.controller("control", function($scope, $http) {
 	$scope.formd = {};
 	$scope.signup = function()
 	{
-		$http.post("/signup", {data: $('.user-post').val()})
+		$http.post("/signup", {data: $scope.formd})
 		.then(function(response)
 		{
 			//console.log(response.data);
 			var status = response.data.status;
 			var message = response.data.message;
+			console.log(response.data);
 			if(status==1) location.href = '/home';
 			else
 			{
@@ -127,6 +135,7 @@ app.controller("control", function($scope, $http) {
 			}
 		}, function(response)
 		{
+			alert(response);
 			});
 	}
 });

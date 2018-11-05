@@ -1,0 +1,163 @@
+<html>
+<head>
+	<title><%=sess.name.split(' ')[0]%>'s Messages - Socialize</title>
+	<!-- Latest compiled and minified CSS -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.1.1/socket.io.js"></script>
+<script>
+  var socket = io('http://localhost:8000');
+  socket.on('news', function (data) {
+    console.log(data);
+    socket.emit('my other event', { my: 'data' });
+  });
+</script>
+<!-- jQuery library -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+
+<!-- Popper JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js"></script>
+
+<!-- Latest compiled JavaScript -->
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.9/angular.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.9/angular-route.js"></script>
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.4.1/css/all.css" integrity="sha384-5sAR7xN1Nv6T6+dT2mhtzEpVJvfS3NScPQTrOxhwjIuvcA67KV2R5Jz6kr4abQsz" crossorigin="anonymous">
+
+<link href='https://fonts.googleapis.com/css?family=ABeeZee' rel='stylesheet'>
+<style>
+body
+{
+	overflow-x: hidden;
+}
+
+.conv
+{
+	padding: 15px;
+	cursor: pointer;
+}
+
+.conv:hover
+{
+	background:#EEE;
+}
+</style>
+</head>
+<body ng-app="social" ng-controller="control" >
+	
+	<header >
+		
+		<nav class="navbar navbar-expand-md bg-dark navbar-dark ">
+			<a class="navbar-brand" href="#">Socialize</a>
+			<ul class="navbar-nav ml-auto" style="margin-right: 50px">
+				<li class="nav-item dropdown" style="margin-right: 15px">
+					<a class="nav-link dropdown" data-toggle="dropdown" style="margin-top:4px" href="#"><i class="fa fa-bell"></i></a>
+					<div class="dropdown-menu dropdown-menu-right" style="margin-top:6px">
+					<ul class="nav nav-tabs nav-justified">
+						<li class="nav-item">
+							<a class="nav-link active" data-toggle="tab" href="#reqs"><font color="#555"><i class="fa fa-handshake"></i></font></a>
+						</li>
+						<li class="nav-item">
+							<a class="nav-link " data-toggle="tab" href="#mess"><font color="#555"><i class="fa fa fa-comments"></i></font></a>
+						</li>
+						<li class="nav-item">
+							<a class="nav-link " data-toggle="tab" href="#notifs"><font color="#555"><i class="fa fa-map"></i></font></a>
+						</li>
+					</ul>
+					<div class="tab-content">
+					  <div class="tab-pane container active" id="reqs">
+						 <div class="noreq" ng-if="user.friendreqrec.length==0">No pending friend requests.</div>
+						 <br>
+						<div class="req" ng-repeat="request in userreqs">
+							<a href="#">{{request.name}}</a> wants to be friends <i class="fa fa-check" ng-click="acceptFriend(request)"></i><i class="fa fa-times"></i>
+						</div>
+					  </div>
+					  <div class="tab-pane container fade" id="mess">
+						<a href="#">Prakhar</a> wants to be Messaged <i class="fa fa-check"></i><i class="fa fa-times"></i>
+					  </div>
+					  <div class="tab-pane container fade" id="notifs">
+						<a href="#">Prakhar</a> wants to be Notified <i class="fa fa-check"></i><i class="fa fa-times"></i>					  
+					  </div>
+					</div>
+					</div>
+				</li>
+				 <li class="nav-item dropdown" >
+					 <a class="nav-link dropdown" data-toggle="dropdown" href="#"><i class="fa fa-user"></i>&nbsp; <%= sess.name.split(' ')[0] %></a>
+					<div class="dropdown-menu" style="margin-top:6px">
+					<a class="dropdown-item" href="/profile">Profile</a>
+					<a class="dropdown-item" href="#">Settings</a>
+					<a class="dropdown-item" href="#">Logout</a>
+					</div>	
+				</li>
+			</ul>
+		</nav>
+	</header>
+	<div class="row">
+		<div class="col-md-4">
+			<div class="user-messages">
+				<div class="conv" ng-repeat="conv in conversations">
+						<span class="name">
+							{{conv.name}}
+						</span>
+						<span class="online"><i class="fa fa-circle" ng-if="olfriend.indexOf(conv.email)!=-1" style="color:green"></i></span>	
+				</div>
+			</div>
+		</div>
+	</div>
+</body>
+<script>
+var app = angular.module("social", []);
+
+app.controller("control", function($scope, $http) {
+	$scope.posts = [];
+	$scope.user = null;
+	$scope.userreqs = [];
+	$scope.conversations = [];
+	$scope.olfriend = [];
+	$http.post("/getUser", {}).then(function(response)
+	{
+		$scope.user = response.data.user;
+		$scope.userreqs= response.data.reqs;
+		$http.post("/getConversations", {email: $scope.user.email}).then(function(response)
+		{
+			$scope.conversations = response.data;
+		});
+	},function(response)
+	{
+		});
+	$scope.acceptFriend = function(request)
+	{
+		$http.post("/acceptFriend", {email: request.email})
+		.then(function(response)
+		{
+			$scope.user.friends.push(request.email);
+			$scope.user.friendreqrec.splice($scope.user.friendreqrec.indexOf(request.email), 1);
+			$scope.userreqs.splice($scope.userreqs.indexOf(request),1);
+			$scope.user.friendreqsent.splice($scope.user.friendreqsent.indexOf(request.email), 1);
+		},function(response)
+		{
+		});
+	};
+	
+	
+	
+	
+});
+$(document).ready(function()
+{
+	  // Add slideDown animation to Bootstrap dropdown when expanding.
+  $('.dropdown').on('show.bs.dropdown', function() {
+    $(this).find('.dropdown-menu').first().stop(true, true).slideDown();
+  });
+
+  // Add slideUp animation to Bootstrap dropdown when collapsing.
+  $('.dropdown').on('hide.bs.dropdown', function() {
+    $(this).find('.dropdown-menu').first().stop(true, true).slideUp();
+  });
+  $(document).on('click', '.dropdown-menu', function (e) {
+  e.stopPropagation();
+});
+});
+</script>
+
+</html>
+
